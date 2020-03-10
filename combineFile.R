@@ -1,5 +1,6 @@
 setwd("~/JianyeGe")
 myJGfiles <- list.files(pattern = ".*20181129\\.txt$")
+footestbar<- list.files(pattern = ".txt$")
 myJGdata<-purrr::map(myJGfiles, ~readr::read_delim(file = .,delim = "\t", 
          col_names = c("chr", "LocusStart", "LocusStop", "Locus","chr_1","Pos","ID","Ref","Alt","Qual","Filter","Info")))
 names(myJGdata) <- stringr::str_replace(myJGfiles, 
@@ -40,8 +41,8 @@ myphasedat1 <- purrr::map_dfr(myphasedat, ~.x, .id = "Group")
 #                                 "Format",paste0("Ind",1:2548))
 sampnames <- as.character(readr::read_delim("samplenames.txt", delim = "\t",col_names = F))
 
-colnames(myphasedat1)[2:2562]<-c("chr", "LocusStart", "LocusStop", "Locus","chr_1","Pos","ID","Ref","Alt","Qual","Filter","Info",
-                                 "Format",sampnames[10:2557])
+colnames(myphasedat1)[2:2518]<-c("chr", "LocusStart", "LocusStop", "Locus","chr_1","Pos","ID","Ref","Alt","Qual","Filter","Info",
+                                 "Format",sampnames[10:2513])
 tail(colnames(myphasedat1),2)
 myphasedat2<-myphasedat1 %>% 
   dplyr::select(-c(chr_1,ID,Qual,Filter))
@@ -76,7 +77,7 @@ myphasedat_10<-myphasedat2[,1:20]
 # code to extract phase information and concat as one string to give final phase info
 
 # read in the population info file
-readr::read_delim("IdsWithSuperpops.tsv", delim = "\t") -> Idswithpop
+readr::read_delim("./../IdsWithSuperpops.tsv", delim = "\t") -> Idswithpop
 
 myphasedat2 %>%
 #myphasedat_10 %>% 
@@ -84,7 +85,7 @@ myphasedat2 %>%
   group_by(Locus) %>%
   gather("ID","Phase", -Locus) %>%
   #left_join(Idswithpop, by="ID") %>% 
-  separate(Phase, into = c("value1","value2")) %>% 
+  separate(Phase, into = c("value1","value2"), sep="[:|]", extra="drop") %>% 
   group_by(Locus, ID) %>%
   summarise_at(vars(starts_with('value')),str_c,collapse="") %>%
   gather("Value","Phase", -ID, -Locus) %>%
@@ -95,6 +96,12 @@ myphasedat2 %>%
 
 # calculating frequency of phases per locus
 myphasedat6_final <- myphasedat4_final %>% count(Locus, Phase) %>% arrange(Locus, desc(n))
+readr::write_delim(myphasedat6_final, path = "./phaseInfo_Snp_STR_PerLocus.txt", delim = "\t")
+
+# ploting # of phases per locus
+myphasedat6_final %>% ggplot(mapping = aes(x=Locus)) + geom_bar(stat = "count", fill="orange", colour="black")+
+  theme_dark()+labs(title = "Number of phases per locus", y = "Frequency of phases" )+
+  theme(axis.text.x = element_text(angle = 45, colour = "black"), title = element_text(color = "blue"))
 
 #############################################################################
 # different approach where df is nested per locus and map is
