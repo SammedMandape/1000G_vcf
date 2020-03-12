@@ -4,6 +4,9 @@ directory = input("Enter directory: ")
 #os.chdir(directory)
 
 def multi_2_one_fa(input_file, output_file):
+    """
+        This will convert multiline fasta file to one line fasta file 
+    """
     print(os.getcwd())
     #output_file = re.match(r'(.*\.\d+)\.fa$',input_file).group(1) + ".fasta"
     #print(output_file)
@@ -11,7 +14,7 @@ def multi_2_one_fa(input_file, output_file):
         block = []
         #[print(line) for line in infile]
         for line in infile:
-            if line.startswith('>.*'):
+            if line.startswith('>'):
                 if block:
                     outfile.write(''.join(block) + '\n')
                     block = []
