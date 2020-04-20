@@ -85,7 +85,12 @@ myphasedat2 %>%
   group_by(Locus) %>%
   gather("ID","Phase", -Locus) %>%
   #left_join(Idswithpop, by="ID") %>% 
-  separate(Phase, into = c("value1","value2"), sep="[:|]", extra="drop") %>% 
+  separate(Phase, into = c("value1","value2"), sep="[:|]", extra="drop") %>% # -> foo
+  mutate(value1 = if_else(value1 > 1, paste0(";",value1,";"),value1), 
+         value2 = if_else(value2 > 1, paste0(";",value2,";"), value2)) %>%
+  # summarise_at puts them together..so tokenization would
+  # have to be done before this step
+  # foo %>% filter(value1 == 3 | value2 ==3) %>% modify_at(c("value1","value2"),function(x){paste0(";",x,";")})
   group_by(Locus, ID) %>%
   summarise_at(vars(starts_with('value')),str_c,collapse="") %>%
   gather("Value","Phase", -ID, -Locus) %>%
@@ -96,7 +101,7 @@ myphasedat2 %>%
 
 # calculating frequency of phases per locus
 myphasedat6_final <- myphasedat4_final %>% count(Locus, Phase) %>% arrange(Locus, desc(n))
-readr::write_delim(myphasedat6_final, path = "./phaseInfo_Snp_STR_PerLocus.txt", delim = "\t")
+readr::write_delim(myphasedat6_final, path = "./phaseInfo_Snp_STR_PerLocus_tokenized.txt", delim = "\t")
 
 # ploting # of phases per locus
 myphasedat6_final %>% ggplot(mapping = aes(x=Locus)) + geom_bar(stat = "count", fill="orange", colour="black")+
